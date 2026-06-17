@@ -5,12 +5,14 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Component
 public class SignalHandler extends TextWebSocketHandler {
 
     private static final Map<String, List<WebSocketSession>> rooms =
-            new HashMap<>();
+            new ConcurrentHashMap<>();
 
     @Override
     public void handleTextMessage(
@@ -28,7 +30,7 @@ public class SignalHandler extends TextWebSocketHandler {
 
             rooms.putIfAbsent(
                     roomCode,
-                    new ArrayList<>()
+                    new CopyOnWriteArrayList<>()
             );
 
             List<WebSocketSession> users =

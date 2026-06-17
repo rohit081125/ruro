@@ -5,7 +5,7 @@ import java.util.*;
 
 @Service
 public class RoomService {
-    private final Set<String> activeRooms = new HashSet<>();
+    private final Set<String> activeRooms = Collections.synchronizedSet(new HashSet<>());
 
     public String createRoom() {
         String code = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
@@ -14,6 +14,6 @@ public class RoomService {
     }
 
     public boolean roomExists(String code) {
-        return activeRooms.contains(code.toUpperCase());
+        return code != null && activeRooms.contains(code.toUpperCase());
     }
 }

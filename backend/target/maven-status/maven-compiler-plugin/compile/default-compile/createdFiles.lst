@@ -1,5 +1,0 @@
-com\videocall\websocket\WebSocketConfig.class
-com\videocall\controller\RoomController.class
-com\videocall\websocket\SignalHandler.class
-com\videocall\service\RoomService.class
-com\videocall\VideoCallApplication.class
