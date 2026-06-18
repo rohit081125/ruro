@@ -427,8 +427,8 @@ const CallRoom = () => {
               onClick={swapped ? () => setSwapped(false) : undefined}
               className={`${
                 !swapped
-                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-square lg:max-w-[560px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
-                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-44 lg:h-44 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-video lg:max-w-[640px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
+                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-48 lg:aspect-video lg:h-auto rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
               }`}
             >
               {isPeerActive && remoteCameraOn ? (
@@ -510,8 +510,8 @@ const CallRoom = () => {
               onClick={!swapped ? () => setSwapped(true) : undefined}
               className={`${
                 swapped
-                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-square lg:max-w-[560px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
-                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-44 lg:h-44 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-video lg:max-w-[640px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
+                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-48 lg:aspect-video lg:h-auto rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
               }`}
             >
               {cameraOn ? (
