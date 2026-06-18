@@ -381,33 +381,33 @@ const CallRoom = () => {
       <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-violet-600/2 dark:bg-violet-600/5 blur-[150px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[400px] bg-indigo-600/2 dark:bg-indigo-600/5 blur-[150px] pointer-events-none -z-10" />
 
-      {/* Header */}
-      <header className="h-16 min-h-16 border-b border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl px-6 flex items-center justify-between z-30 transition-colors duration-300">
-        <div className="flex items-center gap-3">
+      {/* Header (Absolute overlay on top of video) */}
+      <header className="absolute top-0 left-0 right-0 h-20 px-6 flex items-center justify-between z-30 bg-gradient-to-b from-black/60 to-transparent text-white pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
           <BrandLogo size="sm" />
-          <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
-          <span className="text-zinc-500 text-xs font-semibold uppercase tracking-widest hidden sm:block">
+          <div className="h-4 w-[1px] bg-white/20 hidden sm:block" />
+          <span className="text-white/60 text-xs font-semibold uppercase tracking-widest hidden sm:block">
             Secure Session
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 pointer-events-auto">
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors shrink-0 cursor-pointer"
+            className="p-2.5 rounded-xl border border-white/10 bg-black/30 hover:bg-white/10 text-white/80 hover:text-white transition-colors shrink-0 cursor-pointer backdrop-blur-md"
             title="Toggle Theme"
           >
-            {theme === "dark" ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-violet-600" />}
+            {theme === "dark" ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-violet-400" />}
           </button>
 
-          <div className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+          <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2 text-xs text-white backdrop-blur-md">
             <span className={`w-2 h-2 rounded-full ${isPeerActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
             <span className="font-semibold">Room Code: {roomCode}</span>
           </div>
           <button
             onClick={handleCopyLink}
-            className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-900 dark:hover:text-white transition-all text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 text-xs font-medium shadow-sm cursor-pointer"
+            className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 hover:text-white transition-all text-white/80 flex items-center gap-1.5 text-xs font-medium backdrop-blur-md cursor-pointer"
           >
             {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
             {isCopied ? "Copied!" : "Copy Link"}
@@ -416,190 +416,186 @@ const CallRoom = () => {
       </header>
 
       {/* Main Container */}
-      <div className="flex-1 flex min-h-0 relative">
-        {/* Left Section: Video Feeds */}
-        <div className="flex-1 flex flex-col p-4 sm:p-6 relative min-w-0 justify-center overflow-hidden">
+      <div className="absolute inset-0 flex min-h-0 z-10">
+        {/* Left Section: Video Feeds & Controls (Floating overlays) */}
+        <div className="flex-1 relative min-w-0 bg-[#020203] overflow-hidden w-full h-full">
           
-          <div className="relative w-full h-full max-w-3xl mx-auto flex items-center justify-center min-h-0 animate-fade-in">
-            
-            {/* Remote Video Container */}
-            <div
-              onClick={swapped ? () => setSwapped(false) : undefined}
-              className={`${
-                !swapped
-                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-video lg:max-w-[640px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
-                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-48 lg:aspect-video lg:h-auto rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
-              }`}
-            >
-              {isPeerActive && remoteCameraOn ? (
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                /* Center Initial Circle when Remote Camera is Off or Peer is Offline */
-                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300 pointer-events-none">
-                  {isPeerActive ? (
-                    <div className={`rounded-full bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-extrabold text-indigo-600 dark:text-indigo-400 select-none shadow-md animate-pulse ${
-                      swapped 
-                        ? "w-12 h-12 lg:w-16 lg:h-16 text-xl lg:text-2xl" 
-                        : "w-16 h-16 lg:w-24 lg:h-24 text-2xl lg:text-4xl"
-                    }`}>
-                      {(remoteDisplayName || "Participant").charAt(0).toUpperCase()}
-                    </div>
-                  ) : swapped ? (
-                    <div className="flex flex-col items-center justify-center text-center select-none gap-1">
-                      <Users size={16} className="text-violet-600 dark:text-violet-400 animate-pulse" />
-                      <p className="text-[9px] text-zinc-500 font-bold">Waiting...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-4 px-6 text-center select-none">
-                      <div className="w-20 h-20 rounded-full border border-violet-500/10 dark:border-violet-500/30 flex items-center justify-center relative bg-violet-50 dark:bg-violet-950/20">
-                        <div className="absolute inset-0 rounded-full border border-violet-500/20 animate-ping" />
-                        <div className="w-12 h-12 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                          <Users size={22} className="animate-pulse" />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-zinc-900 dark:text-white">Waiting for peer...</p>
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-500 max-w-[220px] leading-relaxed">
-                          Share the room code in the header or copy link to invite someone.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Top-Right Red Status Indicators for Remote Participant */}
-              {isPeerActive && (
-                <div className={`absolute flex z-10 pointer-events-none ${swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
-                  {!remoteMicOn && (
-                    <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
-                      swapped ? "w-6 h-6" : "w-8 h-8"
-                    }`} title="Participant Muted">
-                      <MicOff size={swapped ? 10 : 14} />
-                    </div>
-                  )}
-                  {!remoteCameraOn && (
-                    <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
-                      swapped ? "w-6 h-6" : "w-8 h-8"
-                    }`} title="Participant Camera Off">
-                      <VideoOff size={swapped ? 10 : 14} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 flex items-center text-white select-none pointer-events-none ${
-                swapped 
-                  ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px] gap-1" 
-                  : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs gap-1.5"
-              }`}>
-                <span className={`rounded-full ${swapped ? "w-1.5 h-1.5" : "w-2 h-2"} ${
-                  isPeerActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-500"
-                }`} />
-                {isPeerActive ? remoteDisplayName : swapped ? "Remote" : "Remote Participant (Offline)"}
-              </div>
-            </div>
-
-            {/* Local Video Container */}
-            <div
-              onClick={!swapped ? () => setSwapped(true) : undefined}
-              className={`${
-                swapped
-                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-video lg:max-w-[640px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
-                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-48 lg:aspect-video lg:h-auto rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
-              }`}
-            >
-              {cameraOn ? (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                /* Center Initial Circle when Local Camera is Off */
-                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300 pointer-events-none">
-                  <div className={`rounded-full bg-violet-100 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center font-extrabold text-violet-600 dark:text-violet-400 select-none shadow-md animate-pulse ${
-                    !swapped 
+          {/* Remote Video Container */}
+          <div
+            onClick={swapped ? () => setSwapped(false) : undefined}
+            className={`${
+              !swapped
+                ? "w-full h-full absolute inset-0 z-0 overflow-hidden"
+                : "absolute bottom-24 right-4 lg:bottom-8 lg:right-8 w-28 h-40 sm:w-36 sm:h-52 lg:w-56 lg:h-36 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-zinc-950/80 shadow-2xl z-20 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+            }`}
+          >
+            {isPeerActive && remoteCameraOn ? (
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              /* Center Initial Circle when Remote Camera is Off or Peer is Offline */
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 to-zinc-955 dark:from-[#0a0a0c] dark:to-[#121217] flex items-center justify-center transition-all duration-300 pointer-events-none">
+                {isPeerActive ? (
+                  <div className={`rounded-full bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-extrabold text-indigo-600 dark:text-indigo-400 select-none shadow-md animate-pulse ${
+                    swapped 
                       ? "w-12 h-12 lg:w-16 lg:h-16 text-xl lg:text-2xl" 
                       : "w-16 h-16 lg:w-24 lg:h-24 text-2xl lg:text-4xl"
                   }`}>
-                    {displayName.charAt(0).toUpperCase()}
+                    {(remoteDisplayName || "Participant").charAt(0).toUpperCase()}
                   </div>
-                </div>
-              )}
-
-              {/* Top-Right Red Status Indicators for Local User */}
-              <div className={`absolute flex z-10 pointer-events-none ${!swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
-                {!micOn && (
-                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
-                    !swapped ? "w-6 h-6" : "w-8 h-8"
-                  }`} title="Muted">
-                    <MicOff size={!swapped ? 10 : 14} />
+                ) : swapped ? (
+                  <div className="flex flex-col items-center justify-center text-center select-none gap-1">
+                    <Users size={16} className="text-violet-600 dark:text-violet-400 animate-pulse" />
+                    <p className="text-[9px] text-zinc-500 font-bold">Waiting...</p>
                   </div>
-                )}
-                {!cameraOn && (
-                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
-                    !swapped ? "w-6 h-6" : "w-8 h-8"
-                  }`} title="Camera Off">
-                    <VideoOff size={!swapped ? 10 : 14} />
+                ) : (
+                  <div className="flex flex-col items-center gap-4 px-6 text-center select-none">
+                    <div className="w-20 h-20 rounded-full border border-violet-500/10 dark:border-violet-500/30 flex items-center justify-center relative bg-violet-50 dark:bg-violet-950/20">
+                      <div className="absolute inset-0 rounded-full border border-violet-500/20 animate-ping" />
+                      <div className="w-12 h-12 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                        <Users size={22} className="animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-zinc-900 dark:text-white">Waiting for peer...</p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-500 max-w-[220px] leading-relaxed">
+                        Share the room code in the header or copy link to invite someone.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
+            )}
 
-              <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 text-white select-none pointer-events-none ${
-                !swapped 
-                  ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px]" 
-                  : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs"
-              }`}>
-                {displayName} {!swapped ? "(You)" : " (You - Main)"}
+            {/* Top-Right Red Status Indicators for Remote Participant */}
+            {isPeerActive && (
+              <div className={`absolute flex z-10 pointer-events-none ${swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
+                {!remoteMicOn && (
+                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                    swapped ? "w-6 h-6" : "w-8 h-8"
+                  }`} title="Participant Muted">
+                    <MicOff size={swapped ? 10 : 14} />
+                  </div>
+                )}
+                {!remoteCameraOn && (
+                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                    swapped ? "w-6 h-6" : "w-8 h-8"
+                  }`} title="Participant Camera Off">
+                    <VideoOff size={swapped ? 10 : 14} />
+                  </div>
+                )}
               </div>
+            )}
+
+            <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 flex items-center text-white select-none pointer-events-none ${
+              swapped 
+                ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px] gap-1" 
+                : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs gap-1.5"
+            }`}>
+              <span className={`rounded-full ${swapped ? "w-1.5 h-1.5" : "w-2 h-2"} ${
+                isPeerActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-500"
+              }`} />
+              {isPeerActive ? remoteDisplayName : swapped ? "Remote" : "Remote Participant (Offline)"}
             </div>
-
           </div>
 
-          {/* Controls Bar */}
-          <div className="h-24 min-h-24 flex items-center justify-center gap-4 z-20">
+          {/* Local Video Container */}
+          <div
+            onClick={!swapped ? () => setSwapped(true) : undefined}
+            className={`${
+              swapped
+                ? "w-full h-full absolute inset-0 z-0 overflow-hidden"
+                : "absolute bottom-24 right-4 lg:bottom-8 lg:right-8 w-28 h-40 sm:w-36 sm:h-52 lg:w-56 lg:h-36 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-zinc-950/80 shadow-2xl z-20 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+            }`}
+          >
+            {cameraOn ? (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              /* Center Initial Circle when Local Camera is Off */
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 to-zinc-955 dark:from-[#0a0a0c] dark:to-[#121217] flex items-center justify-center transition-all duration-300 pointer-events-none">
+                <div className={`rounded-full bg-violet-100 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center font-extrabold text-violet-600 dark:text-violet-400 select-none shadow-md animate-pulse ${
+                  !swapped 
+                    ? "w-12 h-12 lg:w-16 lg:h-16 text-xl lg:text-2xl" 
+                    : "w-16 h-16 lg:w-24 lg:h-24 text-2xl lg:text-4xl"
+                }`}>
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
+
+            {/* Top-Right Red Status Indicators for Local User */}
+            <div className={`absolute flex z-10 pointer-events-none ${!swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
+              {!micOn && (
+                <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                  !swapped ? "w-6 h-6" : "w-8 h-8"
+                }`} title="Muted">
+                  <MicOff size={!swapped ? 10 : 14} />
+                </div>
+              )}
+              {!cameraOn && (
+                <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                  !swapped ? "w-6 h-6" : "w-8 h-8"
+                }`} title="Camera Off">
+                  <VideoOff size={!swapped ? 10 : 14} />
+                </div>
+              )}
+            </div>
+
+            <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 text-white select-none pointer-events-none ${
+              !swapped 
+                ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px]" 
+                : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs"
+            }`}>
+              {displayName} {!swapped ? "(You)" : " (You - Main)"}
+            </div>
+          </div>
+
+          {/* Controls Bar (Floating over video) */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 sm:gap-6 z-30 bg-black/60 dark:bg-black/70 backdrop-blur-xl px-6 py-4 sm:px-8 sm:py-5 rounded-[2.5rem] border border-white/10 shadow-2xl transition-all duration-300">
             <button
               onClick={() => toggleTrack("audio")}
-              className={`h-14 w-14 rounded-2xl border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
+              className={`h-14 w-14 sm:h-16 sm:w-16 rounded-[1.25rem] sm:rounded-[1.5rem] border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
                 micOn
-                  ? "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-950 dark:hover:text-white"
+                  ? "bg-white/90 dark:bg-zinc-900/95 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-355 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-955 dark:hover:text-white"
                   : "bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/20"
               }`}
               title={micOn ? "Mute Mic" : "Unmute Mic"}
             >
-              {micOn ? <Mic size={20} /> : <MicOff size={20} />}
+              {micOn ? <Mic size={22} /> : <MicOff size={22} />}
             </button>
 
             <button
               onClick={() => toggleTrack("video")}
-              className={`h-14 w-14 rounded-2xl border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
+              className={`h-14 w-14 sm:h-16 sm:w-16 rounded-[1.25rem] sm:rounded-[1.5rem] border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${
                 cameraOn
-                  ? "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-950 dark:hover:text-white"
+                  ? "bg-white/90 dark:bg-zinc-900/95 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-355 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-955 dark:hover:text-white"
                   : "bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/20"
               }`}
               title={cameraOn ? "Turn Camera Off" : "Turn Camera On"}
             >
-              {cameraOn ? <Video size={20} /> : <VideoOff size={20} />}
+              {cameraOn ? <Video size={22} /> : <VideoOff size={22} />}
             </button>
 
             <button
               onClick={() => setChatOpen(!chatOpen)}
-              className={`h-14 w-14 rounded-2xl border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 relative cursor-pointer ${
+              className={`h-14 w-14 sm:h-16 sm:w-16 rounded-[1.25rem] sm:rounded-[1.5rem] border transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 relative cursor-pointer ${
                 chatOpen
                   ? "bg-violet-100 dark:bg-violet-600/10 border-violet-200 dark:border-violet-500/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-600/20"
-                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-950 dark:hover:text-white"
+                  : "bg-white/90 dark:bg-zinc-900/95 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-355 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-955 dark:hover:text-white"
               }`}
               title="Toggle Chat & Panel"
             >
-              <MessageSquare size={20} />
+              <MessageSquare size={22} />
               {messages.filter(m => !m.self && !m.system).length > 0 && !chatOpen && (
                 <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-violet-500 animate-pulse" />
               )}
@@ -607,24 +603,24 @@ const CallRoom = () => {
 
             <button
               onClick={leaveRoom}
-              className="h-14 w-14 rounded-2xl bg-red-600 hover:bg-red-500 text-white transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-[1.25rem] sm:rounded-[1.5rem] bg-red-600 hover:bg-red-500 text-white transition-all duration-300 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               title="Leave Call"
             >
-              <PhoneOff size={20} />
+              <PhoneOff size={22} />
             </button>
           </div>
         </div>
 
-        {/* Sidebar panel for Chat */}
+        {/* Sidebar panel for Chat (Floating overlay) */}
         <div
-          className={`absolute lg:relative right-0 top-0 h-full border-l border-zinc-200 dark:border-white/5 bg-white/95 dark:bg-[#111115]/95 backdrop-blur-2xl flex flex-col transition-all duration-300 ease-in-out z-40 lg:z-20 ${
+          className={`absolute right-4 top-24 bottom-24 w-[calc(100%-2rem)] sm:w-96 bg-white/90 dark:bg-zinc-955/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl flex flex-col transition-all duration-300 ease-in-out z-40 shadow-2xl ${
             chatOpen
-              ? "w-full sm:w-96 translate-x-0 opacity-100 border-l"
-              : "w-full sm:w-96 lg:w-0 translate-x-full lg:translate-x-0 lg:opacity-0 lg:border-l-0 overflow-hidden pointer-events-none lg:pointer-events-auto"
+              ? "translate-x-0 opacity-100 pointer-events-auto"
+              : "translate-x-[calc(100%+2rem)] opacity-0 pointer-events-none"
           }`}
         >
           {chatOpen && (
-            <div className="h-full flex flex-col min-w-0 w-full sm:w-96 sm:min-w-[384px]">
+            <div className="h-full flex flex-col min-w-0 w-full rounded-2xl">
               {/* Sidebar Header */}
               <div className="h-14 min-h-14 border-b border-zinc-200 dark:border-white/5 px-4 flex items-center justify-between">
                 <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
@@ -644,7 +640,7 @@ const CallRoom = () => {
               <div className="flex-1 overflow-y-auto p-4 min-h-0 scrollbar-thin">
                 <div className="space-y-4">
                   {messages.length === 0 ? (
-                    <div className="h-[200px] flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-650 gap-2">
+                    <div className="h-[200px] flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 gap-2">
                       <MessageSquare size={28} />
                       <p className="text-xs font-semibold">No messages yet</p>
                       <p className="text-[10px] text-zinc-500 dark:text-zinc-500 text-center max-w-[200px]">
@@ -695,14 +691,14 @@ const CallRoom = () => {
               {/* Chat Input Bar */}
               <form
                 onSubmit={handleSendMessage}
-                className="h-20 border-t border-zinc-200 dark:border-white/5 px-4 flex items-center gap-2 bg-zinc-50 dark:bg-[#111115]"
+                className="h-20 border-t border-zinc-200 dark:border-white/5 px-4 flex items-center gap-2 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-b-2xl"
               >
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-white dark:bg-black/40 border border-zinc-300 dark:border-zinc-800 px-4 py-3 rounded-2xl text-sm outline-none focus:border-violet-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-750 text-zinc-900 dark:text-white"
+                  className="flex-1 bg-white dark:bg-black/40 border border-zinc-300 dark:border-zinc-800 px-4 py-3 rounded-2xl text-sm outline-none focus:border-violet-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-zinc-900 dark:text-white"
                 />
                 <button
                   type="submit"
