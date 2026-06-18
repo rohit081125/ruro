@@ -16,6 +16,7 @@ import {
   Info,
   Sun,
   Moon,
+  X,
 } from "lucide-react";
 import BrandLogo from "../components/BrandLogo";
 
@@ -57,11 +58,11 @@ const CallRoom = () => {
   // Chat & UI states
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
-  const [chatOpen, setChatOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState("chat"); // 'chat' | 'participants'
+  const [chatOpen, setChatOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isPeerActive, setIsPeerActive] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+  const [swapped, setSwapped] = useState(false);
   
   // Remote user profile and track states
   const [remoteDisplayName, setRemoteDisplayNameState] = useState("Participant");
@@ -74,7 +75,21 @@ const CallRoom = () => {
   const [remoteMicOn, setRemoteMicOn] = useState(true);
   const [remoteCameraOn, setRemoteCameraOn] = useState(true);
 
-  const displayName = searchParams.get("name") || "Guest";
+  const getSavedUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  };
+  const loggedInUser = getSavedUser();
+  const displayName = loggedInUser?.fullName || searchParams.get("name") || "Guest";
+
+  const sendSignal = (message) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(`${roomCode}::${JSON.stringify(message)}`);
+    }
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,12 +119,6 @@ const CallRoom = () => {
 
   useEffect(() => {
     let cancelled = false;
-
-    const sendSignal = (message) => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(`${roomCode}::${JSON.stringify(message)}`);
-      }
-    };
 
     const createPeer = () => {
       const peer = new RTCPeerConnection({ iceServers });
@@ -159,6 +168,7 @@ const CallRoom = () => {
 
     const start = async () => {
       if (!localStorage.getItem("token")) {
+        localStorage.setItem("redirectAfterLogin", window.location.pathname);
         navigate("/");
         return;
       }
@@ -408,12 +418,19 @@ const CallRoom = () => {
       {/* Main Container */}
       <div className="flex-1 flex min-h-0 relative">
         {/* Left Section: Video Feeds */}
-        <div className="flex-1 flex flex-col p-6 relative min-w-0 justify-center">
+        <div className="flex-1 flex flex-col p-4 sm:p-6 relative min-w-0 justify-center overflow-hidden">
           
-          <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-8 min-h-0 animate-fade-in">
+          <div className="relative w-full h-full max-w-3xl mx-auto flex items-center justify-center min-h-0 animate-fade-in">
             
-            {/* Remote Video Box (Square) */}
-            <div className="w-full max-w-[440px] aspect-square rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300">
+            {/* Remote Video Container */}
+            <div
+              onClick={swapped ? () => setSwapped(false) : undefined}
+              className={`${
+                !swapped
+                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-square lg:max-w-[560px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
+                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-44 lg:h-44 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+              }`}
+            >
               {isPeerActive && remoteCameraOn ? (
                 <video
                   ref={remoteVideoRef}
@@ -423,10 +440,19 @@ const CallRoom = () => {
                 />
               ) : (
                 /* Center Initial Circle when Remote Camera is Off or Peer is Offline */
-                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300">
+                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300 pointer-events-none">
                   {isPeerActive ? (
-                    <div className="w-24 h-24 rounded-full bg-indigo-100 dark:bg-indigo-955/40 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 select-none shadow-md animate-pulse">
+                    <div className={`rounded-full bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-extrabold text-indigo-600 dark:text-indigo-400 select-none shadow-md animate-pulse ${
+                      swapped 
+                        ? "w-12 h-12 lg:w-16 lg:h-16 text-xl lg:text-2xl" 
+                        : "w-16 h-16 lg:w-24 lg:h-24 text-2xl lg:text-4xl"
+                    }`}>
                       {(remoteDisplayName || "Participant").charAt(0).toUpperCase()}
+                    </div>
+                  ) : swapped ? (
+                    <div className="flex flex-col items-center justify-center text-center select-none gap-1">
+                      <Users size={16} className="text-violet-600 dark:text-violet-400 animate-pulse" />
+                      <p className="text-[9px] text-zinc-500 font-bold">Waiting...</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-4 px-6 text-center select-none">
@@ -449,28 +475,45 @@ const CallRoom = () => {
 
               {/* Top-Right Red Status Indicators for Remote Participant */}
               {isPeerActive && (
-                <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <div className={`absolute flex z-10 pointer-events-none ${swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
                   {!remoteMicOn && (
-                    <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20" title="Participant Muted">
-                      <MicOff size={14} />
+                    <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                      swapped ? "w-6 h-6" : "w-8 h-8"
+                    }`} title="Participant Muted">
+                      <MicOff size={swapped ? 10 : 14} />
                     </div>
                   )}
                   {!remoteCameraOn && (
-                    <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20" title="Participant Camera Off">
-                      <VideoOff size={14} />
+                    <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                      swapped ? "w-6 h-6" : "w-8 h-8"
+                    }`} title="Participant Camera Off">
+                      <VideoOff size={swapped ? 10 : 14} />
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="absolute left-4 bottom-4 px-3 py-1.5 rounded-xl bg-black/70 text-xs font-semibold backdrop-blur-md border border-white/5 flex items-center gap-1.5 text-white">
-                <span className={`w-2 h-2 rounded-full ${isPeerActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-500"}`} />
-                {isPeerActive ? remoteDisplayName : "Remote Participant (Offline)"}
+              <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 flex items-center text-white select-none pointer-events-none ${
+                swapped 
+                  ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px] gap-1" 
+                  : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs gap-1.5"
+              }`}>
+                <span className={`rounded-full ${swapped ? "w-1.5 h-1.5" : "w-2 h-2"} ${
+                  isPeerActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-500"
+                }`} />
+                {isPeerActive ? remoteDisplayName : swapped ? "Remote" : "Remote Participant (Offline)"}
               </div>
             </div>
 
-            {/* Local Video Box (Square) */}
-            <div className="w-full max-w-[440px] aspect-square rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300">
+            {/* Local Video Container */}
+            <div
+              onClick={!swapped ? () => setSwapped(true) : undefined}
+              className={`${
+                swapped
+                  ? "w-full h-full lg:h-auto max-h-[calc(100vh-220px)] lg:max-h-none aspect-[3/4] sm:aspect-video lg:aspect-square lg:max-w-[560px] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl relative transition-all duration-300 flex-1 lg:flex-none"
+                  : "absolute bottom-4 right-4 lg:bottom-6 lg:right-6 w-28 h-36 sm:w-36 sm:h-48 lg:w-44 lg:h-44 rounded-2xl border-2 border-white/10 lg:border-white/20 bg-white dark:bg-zinc-950/60 overflow-hidden shadow-2xl z-10 cursor-pointer transition-all duration-300 hover:scale-105 hover:ring-2 hover:ring-violet-500/50"
+              }`}
+            >
               {cameraOn ? (
                 <video
                   ref={localVideoRef}
@@ -481,29 +524,41 @@ const CallRoom = () => {
                 />
               ) : (
                 /* Center Initial Circle when Local Camera is Off */
-                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300">
-                  <div className="w-24 h-24 rounded-full bg-violet-100 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center text-4xl font-extrabold text-violet-600 dark:text-violet-400 select-none shadow-md animate-pulse">
+                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center transition-all duration-300 pointer-events-none">
+                  <div className={`rounded-full bg-violet-100 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center font-extrabold text-violet-600 dark:text-violet-400 select-none shadow-md animate-pulse ${
+                    !swapped 
+                      ? "w-12 h-12 lg:w-16 lg:h-16 text-xl lg:text-2xl" 
+                      : "w-16 h-16 lg:w-24 lg:h-24 text-2xl lg:text-4xl"
+                  }`}>
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 </div>
               )}
 
               {/* Top-Right Red Status Indicators for Local User */}
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
+              <div className={`absolute flex z-10 pointer-events-none ${!swapped ? "top-2 right-2 gap-1" : "top-4 right-4 gap-2"}`}>
                 {!micOn && (
-                  <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20" title="Muted">
-                    <MicOff size={14} />
+                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                    !swapped ? "w-6 h-6" : "w-8 h-8"
+                  }`} title="Muted">
+                    <MicOff size={!swapped ? 10 : 14} />
                   </div>
                 )}
                 {!cameraOn && (
-                  <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20" title="Camera Off">
-                    <VideoOff size={14} />
+                  <div className={`rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg border border-red-500/20 ${
+                    !swapped ? "w-6 h-6" : "w-8 h-8"
+                  }`} title="Camera Off">
+                    <VideoOff size={!swapped ? 10 : 14} />
                   </div>
                 )}
               </div>
 
-              <div className="absolute left-4 bottom-4 px-3 py-1.5 rounded-xl bg-black/70 text-xs font-semibold backdrop-blur-md border border-white/5 text-white">
-                {displayName} (You)
+              <div className={`absolute bg-black/70 font-semibold backdrop-blur-md border border-white/5 text-white select-none pointer-events-none ${
+                !swapped 
+                  ? "left-2 bottom-2 px-2 py-1 rounded-lg text-[9px]" 
+                  : "left-4 bottom-4 px-3 py-1.5 rounded-xl text-xs"
+              }`}>
+                {displayName} {!swapped ? "(You)" : " (You - Main)"}
               </div>
             </div>
 
@@ -560,145 +615,102 @@ const CallRoom = () => {
           </div>
         </div>
 
-        {/* Sidebar panel for Chat & Participants */}
+        {/* Sidebar panel for Chat */}
         <div
-          className={`h-full border-l border-zinc-200 dark:border-white/5 bg-white dark:bg-[#111115]/90 backdrop-blur-2xl flex flex-col transition-all duration-500 ease-in-out z-20 ${
-            chatOpen ? "w-96 min-w-[384px]" : "w-0 min-w-0 border-l-0 overflow-hidden"
+          className={`absolute lg:relative right-0 top-0 h-full border-l border-zinc-200 dark:border-white/5 bg-white/95 dark:bg-[#111115]/95 backdrop-blur-2xl flex flex-col transition-all duration-300 ease-in-out z-40 lg:z-20 ${
+            chatOpen
+              ? "w-full sm:w-96 translate-x-0 opacity-100 border-l"
+              : "w-full sm:w-96 lg:w-0 translate-x-full lg:translate-x-0 lg:opacity-0 lg:border-l-0 overflow-hidden pointer-events-none lg:pointer-events-auto"
           }`}
         >
           {chatOpen && (
-            <div className="h-full flex flex-col min-w-[384px]">
-              {/* Sidebar Tabs */}
-              <div className="h-14 min-h-14 border-b border-zinc-200 dark:border-white/5 px-4 flex items-center gap-2">
+            <div className="h-full flex flex-col min-w-0 w-full sm:w-96 sm:min-w-[384px]">
+              {/* Sidebar Header */}
+              <div className="h-14 min-h-14 border-b border-zinc-200 dark:border-white/5 px-4 flex items-center justify-between">
+                <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                  <MessageSquare size={16} className="text-violet-600 dark:text-violet-400" />
+                  Room Chat
+                </span>
                 <button
-                  onClick={() => setActiveTab("chat")}
-                  className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeTab === "chat"
-                      ? "bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white"
-                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  }`}
+                  onClick={() => setChatOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  title="Close Chat"
                 >
-                  <MessageSquare size={15} />
-                  Chat
-                </button>
-                <button
-                  onClick={() => setActiveTab("participants")}
-                  className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeTab === "participants"
-                      ? "bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white"
-                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  }`}
-                >
-                  <Users size={15} />
-                  Participants
+                  <X size={16} />
                 </button>
               </div>
 
               {/* Sidebar Content */}
               <div className="flex-1 overflow-y-auto p-4 min-h-0 scrollbar-thin">
-                {activeTab === "chat" ? (
-                  <div className="space-y-4">
-                    {messages.length === 0 ? (
-                      <div className="h-[200px] flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 gap-2">
-                        <MessageSquare size={28} />
-                        <p className="text-xs font-semibold">No messages yet</p>
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-700 text-center max-w-[200px]">
-                          Say hello to other participants in this meeting room.
-                        </p>
-                      </div>
-                    ) : (
-                      messages.map((msg, index) => {
-                        if (msg.system) {
-                          return (
-                            <div key={index} className="flex justify-center my-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-950 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-white/5 flex items-center gap-1">
-                                <Info size={10} />
-                                {msg.text}
-                              </span>
-                            </div>
-                          );
-                        }
-
+                <div className="space-y-4">
+                  {messages.length === 0 ? (
+                    <div className="h-[200px] flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-650 gap-2">
+                      <MessageSquare size={28} />
+                      <p className="text-xs font-semibold">No messages yet</p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-500 text-center max-w-[200px]">
+                        Say hello to other participants in this meeting room.
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((msg, index) => {
+                      if (msg.system) {
                         return (
-                          <div
-                            key={index}
-                            className={`flex flex-col max-w-[85%] ${
-                              msg.self ? "ml-auto items-end" : "mr-auto items-start"
-                            }`}
-                          >
-                            <span className="text-[10px] font-semibold text-zinc-500 mb-1 px-1">
-                              {msg.self ? "You" : msg.sender}
-                            </span>
-                            <div
-                              className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                                msg.self
-                                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-600 dark:to-indigo-600 text-white rounded-tr-none shadow-md"
-                                  : "bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none"
-                              }`}
-                            >
+                          <div key={index} className="flex justify-center my-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-550 bg-zinc-100 dark:bg-zinc-950 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-white/5 flex items-center gap-1">
+                              <Info size={10} />
                               {msg.text}
-                            </div>
-                            <span className="text-[9px] text-zinc-400 dark:text-zinc-600 mt-1 px-1">{msg.time}</span>
+                            </span>
                           </div>
                         );
-                      })
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-violet-100 dark:bg-violet-600/10 border border-violet-200 dark:border-violet-500/20 text-violet-600 dark:text-violet-400 font-bold text-sm flex items-center justify-center">
-                          {displayName.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-zinc-900 dark:text-white">{displayName}</p>
-                          <p className="text-[10px] text-zinc-500">Host (You)</p>
-                        </div>
-                      </div>
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    </div>
+                      }
 
-                    {isPeerActive && (
-                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-100/10 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 font-bold text-sm flex items-center justify-center">
-                            {(remoteDisplayName || "Participant").substring(0, 2).toUpperCase()}
+                      return (
+                        <div
+                          key={index}
+                          className={`flex flex-col max-w-[85%] ${
+                            msg.self ? "ml-auto items-end" : "mr-auto items-start"
+                          }`}
+                        >
+                          <span className="text-[10px] font-semibold text-zinc-500 mb-1 px-1">
+                            {msg.self ? "You" : msg.sender}
+                          </span>
+                          <div
+                            className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                              msg.self
+                                ? "bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-600 dark:to-indigo-600 text-white rounded-tr-none shadow-md"
+                                : "bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none"
+                            }`}
+                          >
+                            {msg.text}
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-zinc-900 dark:text-white">{remoteDisplayName}</p>
-                            <p className="text-[10px] text-zinc-500">Connected</p>
-                          </div>
+                          <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-1 px-1">{msg.time}</span>
                         </div>
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      </div>
-                    )}
-                  </div>
-                )}
+                      );
+                    })
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
               </div>
 
               {/* Chat Input Bar */}
-              {activeTab === "chat" && (
-                <form
-                  onSubmit={handleSendMessage}
-                  className="h-20 border-t border-zinc-200 dark:border-white/5 px-4 flex items-center gap-2 bg-zinc-50 dark:bg-[#111115]"
+              <form
+                onSubmit={handleSendMessage}
+                className="h-20 border-t border-zinc-200 dark:border-white/5 px-4 flex items-center gap-2 bg-zinc-50 dark:bg-[#111115]"
+              >
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-white dark:bg-black/40 border border-zinc-300 dark:border-zinc-800 px-4 py-3 rounded-2xl text-sm outline-none focus:border-violet-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-750 text-zinc-900 dark:text-white"
+                />
+                <button
+                  type="submit"
+                  className="h-[44px] w-[44px] rounded-2xl bg-violet-600 hover:bg-violet-700 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-all flex items-center justify-center shrink-0 shadow-md active:scale-95 cursor-pointer"
                 >
-                  <input
-                    type="text"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-white dark:bg-black/40 border border-zinc-300 dark:border-zinc-800 px-4 py-3 rounded-2xl text-sm outline-none focus:border-violet-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-700 text-zinc-900 dark:text-white"
-                  />
-                  <button
-                    type="submit"
-                    className="h-[44px] w-[44px] rounded-2xl bg-violet-600 hover:bg-violet-700 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-all flex items-center justify-center shrink-0 shadow-md active:scale-95 cursor-pointer"
-                  >
-                    <Send size={16} />
-                  </button>
-                </form>
-              )}
+                  <Send size={16} />
+                </button>
+              </form>
             </div>
           )}
         </div>

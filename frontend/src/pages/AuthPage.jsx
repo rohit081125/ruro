@@ -49,6 +49,12 @@ const AuthPage = () => {
   });
 
   useEffect(() => {
+    if (localStorage.getItem("token")) {
+      navigate("/meetings");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
@@ -88,8 +94,11 @@ const AuthPage = () => {
     localStorage.setItem("user", JSON.stringify(data.user));
     notify(data.message || "Authentication successful.", "success");
 
+    const redirectTo = localStorage.getItem("redirectAfterLogin") || "/meetings";
+    localStorage.removeItem("redirectAfterLogin");
+
     setTimeout(() => {
-      navigate("/home");
+      navigate(redirectTo);
     }, 700);
   };
 

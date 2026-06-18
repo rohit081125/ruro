@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import AuthPage from "./pages/AuthPage";
-import Dashboard from "./pages/Dashboard";
 import VideoCall from "./pages/VideoCall";
 import CallRoom from "./pages/CallRoom";
 
@@ -11,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AuthPage />} />
 
-        <Route path="/home" element={<Dashboard />} />
+        <Route path="/home" element={<VideoCall />} />
 
         <Route path="/meetings" element={<VideoCall />} />
 
