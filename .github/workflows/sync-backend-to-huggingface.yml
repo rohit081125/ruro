@@ -25,9 +25,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python - <<'PY'
+          import os
           from huggingface_hub import HfApi
 
-          api = HfApi()
+          api = HfApi(token=os.environ["HF_TOKEN"])
           api.upload_folder(
               repo_id="rohit0811/ruro-backend",
               repo_type="space",
