@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Monitor,
   ChevronDown,
-  KeyRound,
   LogOut,
   UserCircle,
   X,

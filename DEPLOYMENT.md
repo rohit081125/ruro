@@ -44,6 +44,12 @@ Required production variables:
 - `VITE_API_BASE_URL=https://your-backend-domain`
 - `VITE_WS_BASE_URL=wss://your-backend-domain`
 
+Recommended for reliable calls on mobile data and strict Wi-Fi networks:
+
+- `VITE_TURN_URLS=turn:your-turn-domain:3478,turns:your-turn-domain:5349`
+- `VITE_TURN_USERNAME`
+- `VITE_TURN_CREDENTIAL`
+
 Run locally:
 
 ```bash
